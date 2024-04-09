@@ -68,7 +68,7 @@ class Indicador(BaseModel):
 
 class Product(BaseModel):
     name = models.CharField('Nombre del Producto', max_length= 150, unique= True, blank= False, null= False)
-    description = models.CharField('Descripcion de Productos', max_length= 200, blank= False, null = False)
+    description = models.TextField('Descripcion de Productos', max_length= 200, blank= False, null = False)
     image = models.ImageField('Imagen del Productos', upload_to= 'products/', blank= True, null= True)
     category = models.ForeignKey(Category, on_delete= models.CASCADE, verbose_name= 'Categoria', null = True)
     Measue_unit = models.ForeignKey(MeasureUnit, on_delete= models.CASCADE, verbose_name= 'Unidad de Medida', null = True)
