@@ -13,8 +13,8 @@ class ProductSerializer(serializers.ModelSerializer):
         return {
             'id': instance.id,
             'name':instance.name,
-            'descripcion':instance.description,
+            'description':instance.description,
             'image': instance.image if instance.image != "" else "",
-            'category': instance.category.description,
-            'Measue_unit':instance.Measue_unit.description
+            'category': instance.category.description if instance.category is not None else "",
+            'Measue_unit':instance.Measue_unit.description if instance.Measue_unit is not None else ""
         }
