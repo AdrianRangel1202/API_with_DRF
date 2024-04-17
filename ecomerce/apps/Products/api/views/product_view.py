@@ -9,12 +9,14 @@ from apps.Products.api.serializers.product_serializer import ProductSerializer
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
 
+
     def get_queryset(self, pk = None):
         if pk == None:
             return self.get_serializer().Meta.model.objects.filter(state = True)
         else:
             return self.get_serializer().Meta.model.objects.filter(state = True).filter(id = pk).first()
 
+    #Muestra la lista de todos los productos en un estado True 
     def list(self, request):
         product_serializer = self.get_serializer(self.get_queryset(),many=True)
         return Response(product_serializer.data, status=status.HTTP_200_OK)
