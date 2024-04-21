@@ -3,6 +3,15 @@ from apps.users.models import User
 
 
 
+
+# Serializador para mostrar usuarios autenticados por Token
+
+class UserTokenSerializer(serializers.ModelSerializer):
+   
+    class Meta:
+        model = User
+        fields = ('username','email','name', 'last_name')
+
 # Serializador para crear y actualizar usuarios
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
