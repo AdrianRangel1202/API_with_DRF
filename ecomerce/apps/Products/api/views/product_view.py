@@ -3,10 +3,11 @@ from rest_framework import generics, status
 from rest_framework import viewsets
 from apps.Base.api import GeneralListAPIView
 from apps.Products.api.serializers.product_serializer import ProductSerializer
+from apps.users.authentication_mixing import Authentication
 
 
 
-class ProductViewSet(viewsets.ModelViewSet):
+class ProductViewSet(Authentication,viewsets.ModelViewSet):
     serializer_class = ProductSerializer
 
 
