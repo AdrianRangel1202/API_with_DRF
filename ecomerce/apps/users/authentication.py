@@ -22,6 +22,7 @@ class ExpiringTokenAuthentication(TokenAuthentication):
     def token_expire_handler(self, token):
         is_expire = self.is_token_expired(token)
         if is_expire:
+            # elimina el token y crea uno nuevo inmediatamente, "Lo refresca"
             self.expired = True
             user = token.user
             token.delete()
@@ -37,6 +38,7 @@ class ExpiringTokenAuthentication(TokenAuthentication):
             user = token.user
         except self.get_model().DoesNotExist:
             message = 'Token invalido.'
+            self.expired = True
 
         if token is not None:
             if not token.user.is_active:
