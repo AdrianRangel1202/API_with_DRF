@@ -7,17 +7,21 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from apps.users.api.serializer import UserTokenSerializer
+from apps.users.authentication_mixing import Authentication
 
 
 
-class UserToken(APIView):
+class UserToken(Authentication,APIView):
     
     def get(self, request, *args, **kwargs):
-        username = request.GET.get('username')
+
         try:
-            user_token = Token.objects.get(user = UserTokenSerializer().Meta.model.objects.filter(username = username).first())
+            user_token,_ = Token.objects.get_or_create(user = self.user)
+            user = UserTokenSerializer(self.user)
+            
             return Response({
-                'token': user_token.key
+                'token': user_token.key,
+                'user': user.data,
             })
         except:
             return Response({
@@ -57,7 +61,7 @@ class Login(ObtainAuthToken):
                             # lo compara con el id del usuario que quiere iniciar sesion, si es igual  lo eliminara
                             if user.id == int(session_data.get('_auth_user_id')):
                                 session.delete()
-
+                            
                     token.delete()
                     token = Token.objects.create(user = user)
                     return Response ({
@@ -65,6 +69,15 @@ class Login(ObtainAuthToken):
                         'User': user_serializer.data,
                         'message':'Inicio de Session Exitosa'
                         },status = status.HTTP_201_CREATED)
+                        
+                    """token.delete()
+                    
+                    Si el token ya fue creado con anterioridad eliminara el token actual y
+                    regresara un error de usuario ya iniciado session.
+                    
+                    return Response({
+                        'error':'Ya se ha iniciado session con este usuario'
+                    }, status= status.HTTP_409_CONFLICT)"""
             else:
                 return Response({'error':'Usuario No Autorizado'}, status= status.HTTP_401_UNAUTHORIZED)
         else:
