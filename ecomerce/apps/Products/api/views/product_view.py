@@ -1,14 +1,12 @@
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
 from apps.Products.api.serializers.product_serializer import ProductSerializer
 
 
 
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
-    permission_classes = (IsAuthenticated,)
 
 
     def get_queryset(self, pk = None):
