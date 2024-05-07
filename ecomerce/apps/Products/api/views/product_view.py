@@ -1,14 +1,14 @@
 from rest_framework.response import Response
-from rest_framework import generics, status
+from rest_framework import status
 from rest_framework import viewsets
-from apps.Base.api import GeneralListAPIView
+from rest_framework.permissions import IsAuthenticated
 from apps.Products.api.serializers.product_serializer import ProductSerializer
-from apps.users.authentication_mixing import Authentication
 
 
 
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
+    permission_classes = (IsAuthenticated,)
 
 
     def get_queryset(self, pk = None):
@@ -48,7 +48,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     
 
 
-    
+
             
     def destroy(self, request, pk = None):
         product = self.get_queryset().filter(id = pk).first()

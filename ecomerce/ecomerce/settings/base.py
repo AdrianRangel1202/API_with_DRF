@@ -39,12 +39,12 @@ THIRD_APPS = [
     'rest_framework.authtoken',
     'simple_history',
     'drf_yasg',
+    'rest_framework_simplejwt',
     "corsheaders",
 ]
 
 INSTALLED_APPS = BASE_APPS + LOCAL_APPS + THIRD_APPS
 
-TOKEN_EXPIRED_AFTER_SECONDS = 8000
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -128,7 +128,7 @@ CORS_ORIGIN_WHITELIST = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'apps.users.authentication_mixing.Authentication'
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ]
 }
 
