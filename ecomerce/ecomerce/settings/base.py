@@ -44,7 +44,7 @@ THIRD_APPS = [
 
 INSTALLED_APPS = BASE_APPS + LOCAL_APPS + THIRD_APPS
 
-TOKEN_EXPIRED_AFTER_SECONDS = 900
+TOKEN_EXPIRED_AFTER_SECONDS = 8000
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -126,6 +126,11 @@ CORS_ORIGIN_WHITELIST = [
     "http://localhost:3000",
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'apps.users.authentication_mixing.Authentication'
+    ]
+}
 
 
 # Static files (CSS, JavaScript, Images)
