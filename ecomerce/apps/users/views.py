@@ -1,113 +1,53 @@
-from django.contrib.sessions.models import Session
+from django.contrib.auth import authenticate
 from datetime import datetime
 
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
 from rest_framework import status
-from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.views import ObtainAuthToken
-from apps.users.api.serializer import UserTokenSerializer
-from apps.users.authentication_mixing import Authentication
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from apps.users.api.serializer import CustomTokenObtainPairSerializer
+from apps.users.api.serializer import CustomUserSerializer
+from apps.users.models import User
 
 
-
-class UserToken(Authentication,APIView):
-    
-    def get(self, request, *args, **kwargs):
-
-        try:
-            user_token,_ = Token.objects.get_or_create(user = self.user)
-            user = UserTokenSerializer(self.user)
-            
-            return Response({
-                'token': user_token.key,
-                'user': user.data,
-            })
-        except:
-            return Response({
-                'error':'Credenciales enviadas no validas'
-            }, status= status.HTTP_400_BAD_REQUEST)
-
-
-
-class Login(ObtainAuthToken):
-    
+class Login(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
+        username = request.data.get('username', '')
+        password = request.data.get('password', '')
+        user = authenticate(
+            username = username,
+            password = password
+        )
 
-        login_serializer = self.serializer_class(data = request.data, context = {'request':request})
-        if login_serializer.is_valid():
-            user = login_serializer.validated_data['user']
-            if user.is_active:
-                token, created = Token.objects.get_or_create(user = user)
-                user_serializer = UserTokenSerializer(user)
-                if created:
-                    return Response ({
-                        'Token': token.key,
-                        'User': user_serializer.data,
-                        'message':'Inicio de Session Exitosa'
-                        },status = status.HTTP_201_CREATED)
-                else:
-                    
-                    #Filtra todas las sessiones que tengan un tiempo de expiracion igual o mayor al tiempo de la peticion mas reciente
-                    all_sessions = Session.objects.filter(expire_date__gte = datetime.now())
-                    if all_sessions.exists():
-
-                        # Buscara en cada una de las sessiones que arroje la busquedad 
-                        for session in all_sessions:
-                            session_data = session.get_decoded()
-
-                            # toma el numero del id del usuario que tiene la session abierta y
-                            # lo compara con el id del usuario que quiere iniciar sesion, si es igual  lo eliminara
-                            if user.id == int(session_data.get('_auth_user_id')):
-                                session.delete()
-                            
-                    token.delete()
-                    token = Token.objects.create(user = user)
-                    return Response ({
-                        'Token': token.key,
-                        'User': user_serializer.data,
-                        'message':'Inicio de Session Exitosa'
-                        },status = status.HTTP_201_CREATED)
-                        
-                    """token.delete()
-                    
-                    Si el token ya fue creado con anterioridad eliminara el token actual y
-                    regresara un error de usuario ya iniciado session.
-                    
-                    return Response({
-                        'error':'Ya se ha iniciado session con este usuario'
-                    }, status= status.HTTP_409_CONFLICT)"""
-            else:
-                return Response({'error':'Usuario No Autorizado'}, status= status.HTTP_401_UNAUTHORIZED)
-        else:
-            return Response({'error':'Usuario o Contraseña Incorrectos.'}, status= status.HTTP_400_BAD_REQUEST)
-
-
-class logout(APIView):
-
-    def get(self, request, *args, **kwargs):
-        try:
-            token = request.GET.get('token')
-            token = Token.objects.filter(key = token).first()
-            print(token)
-            if token:
-                user = token.user
-                all_sessions = Session.objects.filter(expire_date__gte = datetime.now())
-                if all_sessions.exists():
-                    for session in all_sessions:
-                        session_data = session.get_decoded()
-                        if user.id == int(session_data.get('_auth_user_id')):
-                            session.delete()
-                
-                token.delete()
-                token_message = 'token eliminado!'
-                session_message = 'Sessiones culminadas con exito!'
-
-                return Response({'token_message':token_message, 'session_message':session_message},
-                                status=status.HTTP_200_OK)
+        if user:
+            login_serializer = self.serializer_class(data = request.data)
+            if login_serializer.is_valid():
+                user_serializer = CustomUserSerializer(user)
+                return Response({
+                    'token': login_serializer.validated_data.get('access'),
+                    'refresh-token': login_serializer.validated_data.get('refresh'),
+                    'user': user_serializer.data,
+                    'message': 'Inicio de Session Exitosa!.'
+                }, status= status.HTTP_200_OK)
             
-            return Response({'error':'No se ha encontrado un usuario con estas credenciales.'})
+            else:
+                return Response({'Error':'Datos invalidos'}, status= status.HTTP_401_UNAUTHORIZED)
+        else:
+                return Response({'Error':'Datos invalidos'}, status= status.HTTP_401_UNAUTHORIZED)
         
-        except:
-            return Response({'token no encontrado en la peticion'}, status=status.HTTP_409_CONFLICT)
+
+class Logout(GenericAPIView):
+    
+    def post(self, request, *args, **kwargs):
+        user = User.objects.filter(id = request.data.get('user'))
+        if user.exists():
+            RefreshToken.for_user(user.first())
+            return Response({'message':'Session Cerrada Con Existo!.'}, status=status.HTTP_200_OK)
+        
+        return Response({'Error':'Datos invalidos'}, status= status.HTTP_401_UNAUTHORIZED)
+        
+        
